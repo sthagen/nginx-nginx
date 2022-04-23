@@ -3720,7 +3720,7 @@ ngx_http_core_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_conf_merge_value(conf->internal, prev->internal, 0);
     ngx_conf_merge_value(conf->sendfile, prev->sendfile, 0);
     ngx_conf_merge_size_value(conf->sendfile_max_chunk,
-                              prev->sendfile_max_chunk, 0);
+                              prev->sendfile_max_chunk, 2 * 1024 * 1024);
     ngx_conf_merge_size_value(conf->subrequest_output_buffer_size,
                               prev->subrequest_output_buffer_size,
                               (size_t) ngx_pagesize);
@@ -4567,19 +4567,6 @@ ngx_http_core_set_aio(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return NGX_CONF_ERROR;
 #endif
     }
-
-#if (NGX_HAVE_AIO_SENDFILE)
-
-    if (ngx_strcmp(value[1].data, "sendfile") == 0) {
-        clcf->aio = NGX_HTTP_AIO_ON;
-
-        ngx_conf_log_error(NGX_LOG_WARN, cf, 0,
-                           "the \"sendfile\" parameter of "
-                           "the \"aio\" directive is deprecated");
-        return NGX_CONF_OK;
-    }
-
-#endif
 
     if (ngx_strncmp(value[1].data, "threads", 7) == 0
         && (value[1].len == 7 || value[1].data[7] == '='))
