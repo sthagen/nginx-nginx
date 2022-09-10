@@ -1426,9 +1426,9 @@ ngx_ssl_ecdh_curve(ngx_conf_t *cf, ngx_ssl_t *ssl, ngx_str_t *name)
 
     SSL_CTX_set_options(ssl->ctx, SSL_OP_SINGLE_ECDH_USE);
 
-#if SSL_CTRL_SET_ECDH_AUTO
+#ifdef SSL_CTRL_SET_ECDH_AUTO
     /* not needed in OpenSSL 1.1.0+ */
-    SSL_CTX_set_ecdh_auto(ssl->ctx, 1);
+    (void) SSL_CTX_set_ecdh_auto(ssl->ctx, 1);
 #endif
 
     if (ngx_strcmp(name->data, "auto") == 0) {
@@ -1769,7 +1769,7 @@ ngx_ssl_handshake(ngx_connection_t *c)
 #endif
 #endif
 
-#ifdef BIO_get_ktls_send
+#if (defined BIO_get_ktls_send && !NGX_WIN32)
 
         if (BIO_get_ktls_send(SSL_get_wbio(c->ssl->connection)) == 1) {
             ngx_log_debug0(NGX_LOG_DEBUG_EVENT, c->log, 0,
@@ -1914,7 +1914,7 @@ ngx_ssl_try_early_data(ngx_connection_t *c)
         c->read->ready = 1;
         c->write->ready = 1;
 
-#ifdef BIO_get_ktls_send
+#if (defined BIO_get_ktls_send && !NGX_WIN32)
 
         if (BIO_get_ktls_send(SSL_get_wbio(c->ssl->connection)) == 1) {
             ngx_log_debug0(NGX_LOG_DEBUG_EVENT, c->log, 0,
@@ -2943,7 +2943,7 @@ ngx_ssl_write_early(ngx_connection_t *c, u_char *data, size_t size)
 static ssize_t
 ngx_ssl_sendfile(ngx_connection_t *c, ngx_buf_t *file, size_t size)
 {
-#ifdef BIO_get_ktls_send
+#if (defined BIO_get_ktls_send && !NGX_WIN32)
 
     int        sslerr, flags;
     ssize_t    n;
@@ -3422,6 +3422,9 @@ ngx_ssl_connection_error(ngx_connection_t *c, int sslerr, ngx_err_t err,
 #endif
 #ifdef SSL_R_VERSION_TOO_LOW
             || n == SSL_R_VERSION_TOO_LOW                            /*  396 */
+#endif
+#ifdef SSL_R_BAD_RECORD_TYPE
+            || n == SSL_R_BAD_RECORD_TYPE                            /*  443 */
 #endif
             || n == 1000 /* SSL_R_SSLV3_ALERT_CLOSE_NOTIFY */
 #ifdef SSL_R_SSLV3_ALERT_UNEXPECTED_MESSAGE
